@@ -24,20 +24,23 @@ router.get("/users", (req, res) => {
 });
 
 // get thoughts from a user
+
 router.get("/users/:username", (req, res) => {
   console.log(`Querying for thought(s) from ${req.params.username}.`);
   const params = {
     TableName: table,
-    ProjectionExpression: "#th, #ca",
     KeyConditionExpression: "#un = :user",
     ExpressionAttributeNames: {
       "#un": "username",
       "#ca": "createdAt",
       "#th": "thought",
+      "#img": "image", // add the image attribute alias
     },
     ExpressionAttributeValues: {
       ":user": req.params.username,
     },
+    ProjectionExpression: "#un, #th, #ca, #img", // add the image to the database response
+    ScanIndexForward: false, // false makes the order descending(true is default)
   };
   dynamodb.query(params, (err, data) => {
     if (err) {
@@ -58,6 +61,7 @@ router.post("/users", (req, res) => {
       username: req.body.username,
       createdAt: Date.now(),
       thought: req.body.thought,
+      image: req.body.image,
     },
   };
   dynamodb.put(params, (err, data) => {
